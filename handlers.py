@@ -23,7 +23,6 @@ async def handle_start(message: Message, bot: Bot):
 
         if member.status in ("member", "administrator", "creator"):
             await message.answer("✅ Вы уже состоите в группе! Оплачивать ничего не нужно.")
-            pending_requests[message.from_user.id] = {"id": message.from_user.id, "name": "Владимир"}
             return
 
     except Exception as err:
