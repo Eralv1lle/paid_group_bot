@@ -14,7 +14,7 @@ router = Router()
 with open("pending_requests.json", "r", encoding="utf-8") as file:
     pending_requests = json.load(file)
 pending_requests = {int(k): v for k, v in pending_requests.items()}
-print(pending_requests)
+
 
 @router.message(CommandStart())
 async def handle_start(message: Message, bot: Bot):
@@ -32,7 +32,7 @@ async def handle_start(message: Message, bot: Bot):
         await message.answer("Ваша заявка в обработке. Пожалуйста, ожидайте")
         return
 
-    await message.answer(f"Здравствуйте, {message.from_user.first_name}! Если вы хотите вступить в группу, подайте заявку на вступление.")
+    await message.answer(f"Здравствуйте, {message.from_user.first_name}! Если вы хотите вступить в группу, подайте заявку на вступление в эту <a href='https://t.me/+4ezShyoAqiplNTVi'>группу</a>", parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 @router.chat_join_request()
 async def handle_join_request(join_request: ChatJoinRequest, bot: Bot):
@@ -48,17 +48,19 @@ async def handle_join_request(join_request: ChatJoinRequest, bot: Bot):
             f"👋 Здравствуйте!\n"
             f"Чтобы вступить в нашу группу, необходимо внести оплату — *500 ₽*.\n\n"
             f"Способы оплаты:\n"
-            f"💳 Карта: `1234 1234 1234 1234`\n"
-            f"📲 СБП (по номеру): `+7 999 999 99 99`\n\n"
+            f"💳 Карта: `4276 1609 7651 0736`\n"
+            f"📲 СБП (по номеру): `8 987 143 44 55`, Венера А\n\n"
             f"✅ После оплаты прикрепите сюда чек (фото или документ), и мы подтвердим вашу заявку.",
             parse_mode=ParseMode.MARKDOWN
         )
     except Exception as err:
         username = "" if not join_request.from_user.username else f", {join_request.from_user.username}"
-        await bot.send_message(
-            ADMIN_ID,
-            f"Не удалось отправить сообщение пользователю {user_id}{username}. Возможно, он заблокировал бота."
-        )
+
+        for id_ in ADMIN_IDS:
+            await bot.send_message(
+                id_,
+                f"Не удалось отправить сообщение пользователю {user_id}{username}. Возможно, он заблокировал бота."
+            )
         print(err)
 
 @router.message(F.from_user.id.in_(pending_requests), F.chat.type == "private")
@@ -67,30 +69,33 @@ async def handle_receipt(message: Message, bot: Bot):
         content_type = message.content_type
 
         if content_type == ContentType.TEXT:
-            await bot.send_message(
-                ADMIN_ID,
-                f"Пользователь: {message.from_user.first_name}, прислал чек текстом:\n\n{message.html_text}",
-                parse_mode=ParseMode.HTML,
-                reply_markup=setup_join_kb(message.from_user.id)
-            )
+            for id_ in ADMIN_IDS:
+                await bot.send_message(
+                    id_,
+                    f"Пользователь: {message.from_user.first_name}, прислал чек текстом:\n\n{message.html_text}",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=setup_join_kb(message.from_user.id)
+                )
             await message.answer("✅ Отлично! Мы получили ваш чек.\n⏳ Пожалуйста, подождите — администратор проверит оплату и подтвердит заявку.")
         elif content_type == ContentType.PHOTO:
-            await bot.send_photo(
-                ADMIN_ID,
-                photo=message.photo[-1].file_id,
-                caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал фото чека",
-                parse_mode=ParseMode.HTML,
-                reply_markup=setup_join_kb(message.from_user.id)
-            )
+            for id_ in ADMIN_IDS:
+                await bot.send_photo(
+                    id_,
+                    photo=message.photo[-1].file_id,
+                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал фото чека",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=setup_join_kb(message.from_user.id)
+                )
             await message.answer("✅ Отлично! Мы получили ваш чек.\n⏳ Пожалуйста, подождите — администратор проверит оплату и подтвердит заявку.")
         elif content_type == ContentType.DOCUMENT:
-            await bot.send_document(
-                ADMIN_ID,
-                document=message.document.file_id,
-                caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал чек документом",
-                parse_mode=ParseMode.HTML,
-                reply_markup=setup_join_kb(message.from_user.id)
-            )
+            for id_ in ADMIN_IDS:
+                await bot.send_document(
+                    id_,
+                    document=message.document.file_id,
+                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал чек документом",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=setup_join_kb(message.from_user.id)
+                )
             await message.answer("✅ Отлично! Мы получили ваш чек.\n⏳ Пожалуйста, подождите — администратор проверит оплату и подтвердит заявку.")
         else:
             await message.answer("❗ Пожалуйста, отправьте чек в одном из форматов:\n📝 текст, 🖼 скриншот или 📄 документ.")
@@ -108,15 +113,20 @@ async def handle_confirm(callback: CallbackQuery, bot: Bot):
     except:
         pass
 
-    await callback.answer(f"Пользователь: {user.get('name', 'Без имени')}, добавлен ✅")
-    await callback.message.delete()
+    try:
+        await callback.answer(f"Пользователь: {user.get('name', 'Без имени')}, добавлен ✅")
+    except:
+        await callback.answer(f"Пользователь добавлен ✅")
 
     await bot.send_message(
         user_id,
         "✅ Ваша заявка на вступление принята!\nДобро пожаловать в группу — теперь вы участник."
     )
 
-    del pending_requests[user_id]
+    try:
+        del pending_requests[user_id]
+    except KeyError:
+        pass
 
 @router.callback_query(F.data.startswith("cancel:"))
 async def handle_confirm(callback: CallbackQuery, bot: Bot):
@@ -128,12 +138,17 @@ async def handle_confirm(callback: CallbackQuery, bot: Bot):
     except:
         pass
 
-    await callback.answer(f"Пользователь: {user.get('name', 'Без имени')}, отклонён ❌")
-    await callback.message.delete()
+    try:
+        await callback.answer(f"Пользователь: {user.get('name', 'Без имени')}, отклонён ❌")
+    except:
+        await callback.answer(f"Пользователь отклонён ❌")
 
     await bot.send_message(
         user_id,
         "❌ К сожалению, ваша заявка не была одобрена.\n💳 Пожалуйста, проверьте оплату и убедитесь, что чек отправлен корректно.\n\n🔄 Если произошла ошибка — просто подайте заявку снова и прикрепите чек ещё раз."
     )
 
-    del pending_requests[user_id]
+    try:
+        del pending_requests[user_id]
+    except KeyError:
+        pass
