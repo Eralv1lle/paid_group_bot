@@ -19,6 +19,7 @@ async def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
+    logging.info(pending_requests)
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
