@@ -47,9 +47,10 @@ async def handle_join_request(join_request: ChatJoinRequest, bot: Bot):
             user_id,
             f"👋 Здравствуйте!\n"
             f"Чтобы вступить в нашу группу, необходимо внести оплату — *500 ₽*.\n\n"
+            f"🏦 *Банк*: Сбербанк\n\n"
             f"Способы оплаты:\n"
-            f"💳 Карта: `4276 1609 7651 0736`\n"
-            f"📲 СБП (по номеру): `8 987 143 44 55`, Венера А\n\n"
+            f"— *Карта*: `4276 1609 7651 0736`\n"
+            f"— *СБП (по номеру):* `8 987 143 44 55`, Венера А\n\n"
             f"✅ После оплаты прикрепите сюда чек (фото или документ), и мы подтвердим вашу заявку.",
             parse_mode=ParseMode.MARKDOWN
         )
@@ -72,7 +73,7 @@ async def handle_receipt(message: Message, bot: Bot):
             for id_ in ADMIN_IDS:
                 await bot.send_message(
                     id_,
-                    f"Пользователь: {message.from_user.first_name}, прислал чек текстом:\n\n{message.html_text}",
+                    f"Пользователь: {message.from_user.first_name} @{message.from_user.username}, прислал чек текстом:\n\n{message.html_text}",
                     parse_mode=ParseMode.HTML,
                     reply_markup=setup_join_kb(message.from_user.id)
                 )
@@ -82,7 +83,7 @@ async def handle_receipt(message: Message, bot: Bot):
                 await bot.send_photo(
                     id_,
                     photo=message.photo[-1].file_id,
-                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал фото чека",
+                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name} @{message.from_user.username}, прислал фото чека",
                     parse_mode=ParseMode.HTML,
                     reply_markup=setup_join_kb(message.from_user.id)
                 )
@@ -92,7 +93,7 @@ async def handle_receipt(message: Message, bot: Bot):
                 await bot.send_document(
                     id_,
                     document=message.document.file_id,
-                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name}, прислал чек документом",
+                    caption=f"{message.html_text}\n\nПользователь: {message.from_user.first_name} @{message.from_user.username}, прислал чек документом",
                     parse_mode=ParseMode.HTML,
                     reply_markup=setup_join_kb(message.from_user.id)
                 )
